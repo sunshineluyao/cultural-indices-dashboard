@@ -2,10 +2,9 @@ import dash
 from dash import dcc, html
 import plotly.graph_objects as go
 import pandas as pd
-import numpy as np
 
 # Load the dataset
-file_path = 'updated_merged_data.csv'  # File path in the root directory
+file_path = 'updated_merged_data.csv'  # Ensure this file exists in the same directory as app.py
 merged_data = pd.read_csv(file_path)
 
 # Assign distinct colors for each region
@@ -22,7 +21,7 @@ region_colors = {
 
 # Create Dash app
 app = dash.Dash(__name__)
-server = app.server  # Required for Render deployment
+server = app.server  # Expose the Flask server instance for Gunicorn
 
 # Create Plotly figure
 optimized_fig = go.Figure()
@@ -30,7 +29,7 @@ optimized_fig = go.Figure()
 for region, color in region_colors.items():
     region_data = merged_data[merged_data["Cultural_Region"] == region]
 
-    # Survey data
+    # Add Survey data
     optimized_fig.add_trace(go.Scatter(
         x=region_data["Survival_vs_SelfExpression_Survey"],
         y=region_data["Traditional_vs_Secular_Survey"],
@@ -41,7 +40,7 @@ for region, color in region_colors.items():
         hoverinfo="text"
     ))
 
-    # ChatGPT data
+    # Add ChatGPT data
     optimized_fig.add_trace(go.Scatter(
         x=region_data["Survival_vs_SelfExpression_ChatGPT"],
         y=region_data["Traditional_vs_Secular_ChatGPT"],
@@ -52,6 +51,7 @@ for region, color in region_colors.items():
         hoverinfo="text"
     ))
 
+# Add dropdown menu for interactivity
 buttons = [
     dict(label="Select All", method="update", args=[{"visible": [True] * len(optimized_fig.data)}, {"title": "All Regions"}]),
     dict(label="Unselect All", method="update", args=[{"visible": [False] * len(optimized_fig.data)}, {"title": "No Data Visible"}])
@@ -65,6 +65,7 @@ for region, color in region_colors.items():
         args=[{"visible": visibility}, {"title": f"Cultural Indices ({region})"}]
     ))
 
+# Update figure layout
 optimized_fig.update_layout(
     updatemenus=[
         dict(
@@ -87,10 +88,12 @@ optimized_fig.update_layout(
     hovermode="closest"
 )
 
+# Define the app layout
 app.layout = html.Div([
     html.H1("Cultural Indices Dashboard"),
     dcc.Graph(figure=optimized_fig)
 ])
 
+# Run the app locally
 if __name__ == "__main__":
     app.run_server(debug=True, host='0.0.0.0', port=8080)
